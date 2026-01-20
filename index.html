@@ -14,29 +14,25 @@
             border-left-color: #3b82f6;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .auto-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .auto-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans">
 
     <div class="max-w-md mx-auto p-4">
-        <!-- Header -->
+        <!-- 標題欄 -->
         <header class="text-center my-6">
             <h1 class="text-2xl font-bold text-slate-800">建造業證件全自動填表</h1>
             <p class="text-slate-500 mt-2 text-sm">拍照後自動 AI 分析並上傳雲端</p>
+            <div class="flex justify-center space-x-4 mt-2">
+                <button onclick="resetApiKey()" class="text-xs text-red-500 underline">清除/更換 API Key</button>
+                <button onclick="checkKeyStatus()" class="text-xs text-blue-500 underline">檢查 Key 狀態</button>
+            </div>
         </header>
 
-        <!-- Camera / Upload Section -->
+        <!-- 相機 / 上傳 區塊 -->
         <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-slate-200">
             <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-8 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative" id="uploadZone">
                 <input type="file" id="cameraInput" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer">
@@ -46,21 +42,19 @@
                     </svg>
                 </div>
                 <span class="text-base font-bold text-blue-600">點擊此處拍照</span>
-                <p class="text-xs text-slate-400 mt-1 text-center">支援平安卡 / 註冊證 / 身分證<br>拍照後即刻自動處理</p>
             </div>
             
-            <!-- Process Indicator -->
             <div id="processContainer" class="hidden mt-4 text-center p-4 bg-blue-50 rounded-xl border border-blue-100">
                 <div class="flex items-center justify-center space-x-3 mb-2">
                     <div class="loading-spinner" style="width: 24px; height: 24px;"></div>
                     <span id="processStatus" class="font-bold text-blue-700 auto-pulse">正在透過 AI 識別...</span>
                 </div>
-                <img id="imagePreview" src="" alt="Preview" class="w-full h-32 object-cover rounded-lg mt-2 opacity-50 grayscale">
+                <img id="imagePreview" src="" alt="預覽" class="w-full h-32 object-cover rounded-lg mt-2 opacity-50 grayscale">
             </div>
         </div>
 
-        <!-- Result Form -->
-        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 mb-10 overflow-hidden transition-all duration-500 opacity-60" id="resultCard">
+        <!-- 結果顯示表單 -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 mb-10 opacity-60" id="resultCard">
             <div class="flex justify-between items-center mb-5">
                 <h2 class="text-lg font-bold text-slate-800 border-l-4 border-blue-500 pl-3">資料確認</h2>
                 <div id="syncBadge" class="hidden px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">已同步</div>
@@ -70,44 +64,50 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group">
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">中文姓名</label>
-                        <input type="text" id="chiName" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                        <input type="text" id="chiName" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm">
                     </div>
                     <div class="form-group">
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">英文姓名</label>
-                        <input type="text" id="engName" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                        <input type="text" id="engName" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm">
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label class="block text-xs font-bold text-slate-400 uppercase mb-1">身分證號碼</label>
-                    <input type="text" id="idNumber" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                    <input type="text" id="idNumber" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm">
                 </div>
-
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group">
                         <label class="block text-xs font-bold text-slate-400 mb-1 text-blue-600">平安卡號</label>
-                        <input type="text" id="safetyCardNo" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                        <input type="text" id="safetyCardNo" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm">
                     </div>
                     <div class="form-group">
                         <label class="block text-xs font-bold text-slate-400 mb-1 text-green-600">註冊證號</label>
-                        <input type="text" id="workerRegNo" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                        <input type="text" id="workerRegNo" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm">
                     </div>
                 </div>
             </form>
-            
-            <button onclick="window.location.reload()" class="w-full mt-6 py-3 border border-slate-200 text-slate-400 rounded-xl text-sm font-medium hover:bg-slate-50">完成並掃描下一張</button>
+            <button onclick="window.location.reload()" class="w-full mt-6 py-3 border border-slate-200 text-slate-400 rounded-xl text-sm font-medium">完成並掃描下一張</button>
         </div>
     </div>
 
-    <!-- Status Toast -->
+    <!-- API KEY 彈窗 -->
+    <div id="keyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100] hidden">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h3 class="text-lg font-bold mb-2">設定 API Key</h3>
+            <p class="text-sm text-gray-500 mb-4">目前的金鑰無效或尚未設定。請從 Google AI Studio 獲取新金鑰並貼上。</p>
+            <input type="password" id="keyInput" class="w-full border rounded-lg p-3 mb-4 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="在此貼上金鑰...">
+            <button onclick="saveApiKey()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors">儲存並開始</button>
+            <p class="text-[10px] text-gray-400 mt-4 text-center">金鑰僅存於瀏覽器 localStorage，不會上傳至伺服器原始碼。</p>
+        </div>
+    </div>
+
     <div id="statusToast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full text-sm shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50"></div>
 
     <script>
-        // 設定區
-        const apiKey = "AIzaSyA8c2Y7ioKW4HxtWsmZpmtXFPtpHE1UNDA"; // 請填入 Gemini API Key
+        // 常數設定
         const googleScriptUrl = "https://script.google.com/macros/s/AKfycbzM8jY9AOjZjW9L-bB0TyKsUa7yX3KeIUYAUaDH8ih4sm5v3kjmToVVg3mKsI4OOiIuiA/exec";
+        let apiKey = localStorage.getItem('gemini_api_key') || "";
 
-        // DOM 元素
         const cameraInput = document.getElementById('cameraInput');
         const imagePreview = document.getElementById('imagePreview');
         const uploadZone = document.getElementById('uploadZone');
@@ -116,13 +116,47 @@
         const statusToast = document.getElementById('statusToast');
         const resultCard = document.getElementById('resultCard');
         const syncBadge = document.getElementById('syncBadge');
+        const keyModal = document.getElementById('keyModal');
 
-        // 拍照監聽
+        window.onload = () => {
+            if (!apiKey) {
+                keyModal.classList.remove('hidden');
+            }
+        };
+
+        function saveApiKey() {
+            const val = document.getElementById('keyInput').value.trim();
+            if (val) {
+                localStorage.setItem('gemini_api_key', val);
+                apiKey = val;
+                keyModal.classList.add('hidden');
+                showToast("✅ 金鑰已更新，請重新嘗試拍照");
+            } else {
+                showToast("❌ 請輸入有效的金鑰");
+            }
+        }
+
+        function resetApiKey() {
+            localStorage.removeItem('gemini_api_key');
+            apiKey = "";
+            document.getElementById('keyInput').value = "";
+            keyModal.classList.remove('hidden');
+            showToast("金鑰已清除");
+        }
+
+        function checkKeyStatus() {
+            if(!apiKey) showToast("尚未設定金鑰");
+            else showToast("已設定金鑰，若無法識別請嘗試更換");
+        }
+
         cameraInput.addEventListener('change', async function(e) {
+            if (!apiKey) {
+                keyModal.classList.remove('hidden');
+                return;
+            }
             const file = e.target.files[0];
             if (!file) return;
 
-            // 1. 顯示處理中 UI
             uploadZone.classList.add('hidden');
             processContainer.classList.remove('hidden');
             
@@ -130,23 +164,16 @@
             reader.onload = async function(event) {
                 imagePreview.src = event.target.result;
                 const base64Data = event.target.result.split(',')[1];
-                
-                // 2. 自動執行 AI 分析
                 await autoProcess(base64Data);
             };
             reader.readAsDataURL(file);
         });
 
-        // 全自動處理邏輯
         async function autoProcess(base64Image) {
             updateStatus("AI 正在解析證件...", "blue");
-
-            const prompt = `你是一個專業的香港建造業證件助手。請從圖中提取：
-            chi_name, eng_name, id_number, safety_card_no, safety_card_expiry, worker_reg_no, worker_reg_expiry, worker_trade。
-            請以 JSON 格式回傳。`;
+            const prompt = `你是一個專業的香港建造業證件識別助手。請從圖中提取以下資訊：chi_name, eng_name, id_number, safety_card_no, safety_card_expiry, worker_reg_no, worker_reg_expiry, worker_trade。請以 JSON 格式回傳。`;
 
             try {
-                // 第一階段：AI 分析
                 const response = await fetchWithRetry(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
                     {
@@ -160,27 +187,38 @@
                 );
 
                 const data = await response.json();
-                const result = JSON.parse(data.candidates[0].content.parts[0].text);
                 
-                // 填充表單並顯示
+                // 處理 API 回傳的錯誤
+                if (data.error) {
+                    if (data.error.message.includes("API key not valid") || data.error.status === "INVALID_ARGUMENT") {
+                        throw new Error("API 金鑰無效，請點擊重設");
+                    }
+                    throw new Error(data.error.message);
+                }
+
+                const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!resultText) throw new Error("AI 未能產生結果，請確保照片清晰");
+                
+                const result = JSON.parse(resultText);
+                
                 fillForm(result);
                 resultCard.classList.remove('opacity-60');
-                
-                // 第二階段：自動上傳
-                updateStatus("識別成功，正在同步雲端...", "green");
+                updateStatus("識別成功，正在同步...", "green");
                 await uploadData(result);
 
             } catch (error) {
                 console.error(error);
-                updateStatus("處理失敗，請重試", "red");
-                showToast("❌ 錯誤：無法完成自動流程");
-                setTimeout(() => window.location.reload(), 3000);
+                updateStatus(`失敗: ${error.message}`, "red");
+                showToast(`❌ 錯誤: ${error.message}`);
+                
+                // 如果是金鑰錯誤，自動彈出設定框
+                if (error.message.includes("金鑰無效")) {
+                    setTimeout(resetApiKey, 1500);
+                }
             }
         }
 
         async function uploadData(result) {
-            if (!googleScriptUrl || googleScriptUrl.includes("YOUR_GOOGLE")) return;
-
             try {
                 await fetch(googleScriptUrl, {
                     method: 'POST',
@@ -188,12 +226,10 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(result)
                 });
-                
-                updateStatus("✅ 所有流程已完成！", "emerald");
+                updateStatus("✅ 已同步至雲端", "emerald");
                 syncBadge.classList.remove('hidden');
-                showToast("資料已成功上傳至 Google Sheet");
-            } catch (error) {
-                showToast("⚠️ 識別成功但上傳失敗");
+            } catch (e) {
+                showToast("上傳失敗，請檢查 Google Script URL");
             }
         }
 
@@ -210,24 +246,31 @@
             processStatus.className = `font-bold text-${color}-700 auto-pulse`;
         }
 
-        async function fetchWithRetry(url, options, retries = 3) {
+        async function fetchWithRetry(url, options, retries = 2) {
+            let lastError;
             for (let i = 0; i < retries; i++) {
                 try {
                     const res = await fetch(url, options);
-                    if (res.ok) return res;
-                } catch (e) {}
-                await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+                    // 即使不 ok 也要解析 JSON 看看錯誤原因
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({ error: { message: `HTTP ${res.status}` } }));
+                        throw new Error(err.error?.message || "網路錯誤");
+                    }
+                    return res;
+                } catch (e) {
+                    lastError = e;
+                    if (e.message.includes("key not valid") || e.message.includes("金鑰無效")) throw e;
+                    await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+                }
             }
-            throw new Error("Fetch failed");
+            throw lastError;
         }
 
         function showToast(msg) {
             statusToast.textContent = msg;
             statusToast.classList.replace('opacity-0', 'opacity-100');
-            setTimeout(() => statusToast.classList.replace('opacity-100', 'opacity-0'), 3000);
+            setTimeout(() => statusToast.classList.replace('opacity-100', 'opacity-0'), 4000);
         }
     </script>
 </body>
-
 </html>
-
