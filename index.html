@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建造業證件全自動識別系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .auto-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans">
+
+    <div class="max-w-md mx-auto p-4">
+        <!-- Header -->
+        <header class="text-center my-6">
+            <h1 class="text-2xl font-bold text-slate-800">建造業證件全自動填表</h1>
+            <p class="text-slate-500 mt-2 text-sm">拍照後自動 AI 分析並上傳雲端</p>
+        </header>
+
+        <!-- Camera / Upload Section -->
+        <div class="bg-white rounded-2xl shadow-sm p-5 mb-6 border border-slate-200">
+            <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-8 bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer relative" id="uploadZone">
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" class="absolute inset-0 opacity-0 cursor-pointer">
+                <div class="bg-blue-600 p-4 rounded-full mb-3 shadow-lg shadow-blue-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    </svg>
+                </div>
+                <span class="text-base font-bold text-blue-600">點擊此處拍照</span>
+                <p class="text-xs text-slate-400 mt-1 text-center">支援平安卡 / 註冊證 / 身分證<br>拍照後即刻自動處理</p>
+            </div>
+            
+            <!-- Process Indicator -->
+            <div id="processContainer" class="hidden mt-4 text-center p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <div class="flex items-center justify-center space-x-3 mb-2">
+                    <div class="loading-spinner" style="width: 24px; height: 24px;"></div>
+                    <span id="processStatus" class="font-bold text-blue-700 auto-pulse">正在透過 AI 識別...</span>
+                </div>
+                <img id="imagePreview" src="" alt="Preview" class="w-full h-32 object-cover rounded-lg mt-2 opacity-50 grayscale">
+            </div>
+        </div>
+
+        <!-- Result Form -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 mb-10 overflow-hidden transition-all duration-500 opacity-60" id="resultCard">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-lg font-bold text-slate-800 border-l-4 border-blue-500 pl-3">資料確認</h2>
+                <div id="syncBadge" class="hidden px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">已同步</div>
+            </div>
+            
+            <form id="infoForm" class="space-y-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">中文姓名</label>
+                        <input type="text" id="chiName" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                    </div>
+                    <div class="form-group">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">英文姓名</label>
+                        <input type="text" id="engName" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">身分證號碼</label>
+                    <input type="text" id="idNumber" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="block text-xs font-bold text-slate-400 mb-1 text-blue-600">平安卡號</label>
+                        <input type="text" id="safetyCardNo" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                    </div>
+                    <div class="form-group">
+                        <label class="block text-xs font-bold text-slate-400 mb-1 text-green-600">註冊證號</label>
+                        <input type="text" id="workerRegNo" readonly class="w-full bg-slate-50 border-0 rounded-lg p-2 text-slate-800 text-sm focus:outline-none">
+                    </div>
+                </div>
+            </form>
+            
+            <button onclick="window.location.reload()" class="w-full mt-6 py-3 border border-slate-200 text-slate-400 rounded-xl text-sm font-medium hover:bg-slate-50">完成並掃描下一張</button>
+        </div>
+    </div>
+
+    <!-- Status Toast -->
+    <div id="statusToast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full text-sm shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50"></div>
+
+    <script>
+        // 設定區
+        const apiKey = "AIzaSyCf0Z82keK9OI-hsuA5tQPY-aCXC-KWtG0"; // 請填入 Gemini API Key
+        const googleScriptUrl = "https://script.google.com/macros/s/AKfycbzM8jY9AOjZjW9L-bB0TyKsUa7yX3KeIUYAUaDH8ih4sm5v3kjmToVVg3mKsI4OOiIuiA/exec";
+
+        // DOM 元素
+        const cameraInput = document.getElementById('cameraInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadZone = document.getElementById('uploadZone');
+        const processContainer = document.getElementById('processContainer');
+        const processStatus = document.getElementById('processStatus');
+        const statusToast = document.getElementById('statusToast');
+        const resultCard = document.getElementById('resultCard');
+        const syncBadge = document.getElementById('syncBadge');
+
+        // 拍照監聽
+        cameraInput.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 1. 顯示處理中 UI
+            uploadZone.classList.add('hidden');
+            processContainer.classList.remove('hidden');
+            
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                imagePreview.src = event.target.result;
+                const base64Data = event.target.result.split(',')[1];
+                
+                // 2. 自動執行 AI 分析
+                await autoProcess(base64Data);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 全自動處理邏輯
+        async function autoProcess(base64Image) {
+            updateStatus("AI 正在解析證件...", "blue");
+
+            const prompt = `你是一個專業的香港建造業證件助手。請從圖中提取：
+            chi_name, eng_name, id_number, safety_card_no, safety_card_expiry, worker_reg_no, worker_reg_expiry, worker_trade。
+            請以 JSON 格式回傳。`;
+
+            try {
+                // 第一階段：AI 分析
+                const response = await fetchWithRetry(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: base64Image } }] }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    }
+                );
+
+                const data = await response.json();
+                const result = JSON.parse(data.candidates[0].content.parts[0].text);
+                
+                // 填充表單並顯示
+                fillForm(result);
+                resultCard.classList.remove('opacity-60');
+                
+                // 第二階段：自動上傳
+                updateStatus("識別成功，正在同步雲端...", "green");
+                await uploadData(result);
+
+            } catch (error) {
+                console.error(error);
+                updateStatus("處理失敗，請重試", "red");
+                showToast("❌ 錯誤：無法完成自動流程");
+                setTimeout(() => window.location.reload(), 3000);
+            }
+        }
+
+        async function uploadData(result) {
+            if (!googleScriptUrl || googleScriptUrl.includes("YOUR_GOOGLE")) return;
+
+            try {
+                await fetch(googleScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(result)
+                });
+                
+                updateStatus("✅ 所有流程已完成！", "emerald");
+                syncBadge.classList.remove('hidden');
+                showToast("資料已成功上傳至 Google Sheet");
+            } catch (error) {
+                showToast("⚠️ 識別成功但上傳失敗");
+            }
+        }
+
+        function fillForm(data) {
+            document.getElementById('chiName').value = data.chi_name || "---";
+            document.getElementById('engName').value = data.eng_name || "---";
+            document.getElementById('idNumber').value = data.id_number || "---";
+            document.getElementById('safetyCardNo').value = data.safety_card_no || "---";
+            document.getElementById('workerRegNo').value = data.worker_reg_no || "---";
+        }
+
+        function updateStatus(msg, color) {
+            processStatus.textContent = msg;
+            processStatus.className = `font-bold text-${color}-700 auto-pulse`;
+        }
+
+        async function fetchWithRetry(url, options, retries = 3) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (res.ok) return res;
+                } catch (e) {}
+                await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+            }
+            throw new Error("Fetch failed");
+        }
+
+        function showToast(msg) {
+            statusToast.textContent = msg;
+            statusToast.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => statusToast.classList.replace('opacity-100', 'opacity-0'), 3000);
+        }
+    </script>
+</body>
+</html>
